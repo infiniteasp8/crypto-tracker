@@ -1,7 +1,7 @@
 const express = require('express');
 const connectDB = require('./config/database');
 const { startCryptoFetchJob } = require('./jobs/cryptoFetchJob'); // Import the updated job
-
+require('dotenv').config();
 // Import routes
 const statsRoute = require('./routes/stats');
 const deviationRoute = require('./routes/deviation');
