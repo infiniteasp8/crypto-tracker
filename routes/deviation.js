@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const cryptoStats = require('../models/cryptoStats');
+const cryptoStats = require('../models/CryptoStats');
 
 // GET /deviation?coin=bitcoin
 router.get('/deviation', async (req, res) => {

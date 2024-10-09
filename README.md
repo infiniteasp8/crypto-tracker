@@ -52,8 +52,11 @@ The application uses MongoDB to store data about cryptocurrencies. Two main coll
 - **Mongoose**: ODM library for MongoDB and Node.js.
 - **CoinGecko API**: External API used for fetching real-time cryptocurrency data.
 
+<<<<<<< HEAD
 ## Installation
 1. Clone the repository:
    ```bash
    git clone https://github.com/yourusername/crypto-tracker.git
    cd crypto-tracker
+=======
+>>>>>>> 64f8d86743dfb3d031e0be963e25766e11c1429a

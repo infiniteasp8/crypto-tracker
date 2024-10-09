@@ -1,7 +1,7 @@
 // jobs/cryptoFetchJob.js
 
-const cryptoData = require('../models/cryptoData');
-const cryptoStats = require('../models/cryptoStats');
+const cryptoData = require('../models/CryptoData');
+const cryptoStats = require('../models/CryptoStats');
 const axios = require('axios');
 
 // Define CoinGecko IDs for the cryptocurrencies
