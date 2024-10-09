@@ -1,18 +1,27 @@
-const express = require('express');
-const CryptoStats = require('../models/cryptoStats');
-const router = express.Router();
+// routes/deviation.js
 
-// GET /deviation endpoint to fetch standard deviation for a given coin
+const express = require('express');
+const router = express.Router();
+const cryptoStats = require('../models/cryptoStats');
+
+// GET /deviation?coin=bitcoin
 router.get('/deviation', async (req, res) => {
   const { coin } = req.query;
 
   try {
-    const stat = await CryptoStats.findOne({ coin });
-    if (!stat) return res.status(404).json({ msg: 'Coin statistics not found' });
+    // Fetch the standard deviation from the cryptoStats collection
+    const stats = await cryptoStats.findOne({ coin });
 
-    res.json({ deviation: stat.stdDeviation });
+    if (!stats) {
+      return res.status(404).json({ message: 'No stats found for the specified coin' });
+    }
+
+    const { stdDeviation } = stats;
+
+    return res.json({ deviation: stdDeviation });
   } catch (error) {
-    res.status(500).json({ msg: 'Server Error' });
+    console.error(error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 

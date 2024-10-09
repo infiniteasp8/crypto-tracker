@@ -1,14 +1,22 @@
 const express = require('express');
 const connectDB = require('./config/database');
+const { startCryptoFetchJob } = require('./jobs/cryptoFetchJob'); // Import the updated job
+
+// Import routes
+const statsRoute = require('./routes/stats');
+const deviationRoute = require('./routes/deviation');
 
 const app = express();
-
-// Connect to MongoDB
 connectDB();
 
-// Middlewares
 app.use(express.json());
 
-// Starting the server
+// Use routes
+app.use('/', statsRoute);
+app.use('/', deviationRoute);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Start the background job immediately after server startup
+startCryptoFetchJob();

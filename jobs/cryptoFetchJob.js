@@ -1,59 +1,81 @@
-const cron = require('node-cron');
+// jobs/cryptoFetchJob.js
+
+const cryptoData = require('../models/cryptoData');
+const cryptoStats = require('../models/cryptoStats');
 const axios = require('axios');
-const CryptoData = require('../models/CryptoData');
-const CryptoStats = require('../models/cryptoStats');
 
-// CoinGecko API URLs for fetching data
-const cryptoIDs = ['bitcoin', 'matic-network', 'ethereum'];
-const url = 'https://api.coingecko.com/api/v3/simple/price';
+// Define CoinGecko IDs for the cryptocurrencies
+const coins = ['bitcoin', 'ethereum', 'matic-network'];
 
-async function fetchCryptoData() {
+const fetchCryptoData = async () => {
   try {
-    const response = await axios.get(url, {
-      params: {
-        ids: cryptoIDs.join(','),
-        vs_currencies: 'usd',
-        include_market_cap: 'true',
-        include_24hr_change: 'true'
-      }
-    });
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${coins.join()}&vs_currencies=usd&include_market_cap=true&include_24hr_change=true`;
+    const response = await axios.get(url);
 
-    const data = response.data;
+    if (response.data) {
+      for (const coin of coins) {
+        const { usd: price, usd_market_cap: marketCap, usd_24h_change: change24h } = response.data[coin];
 
-    for (const coin of cryptoIDs) {
-      const price = data[coin].usd;
-      const marketCap = data[coin].usd_market_cap;
-      const change24h = data[coin].usd_24h_change;
-
-      // Save data in CryptoData collection
-      const newEntry = new CryptoData({ coin, price, marketCap, change24h });
-      await newEntry.save();
-
-      // Update statistics in CryptoStats collection
-      const stat = await CryptoStats.findOne({ coin });
-      if (stat) {
-        stat.sum += price;
-        stat.sumOfSquares += price * price;
-        stat.count = Math.min(stat.count + 1, 100); // Limit count to 100
-        stat.stdDeviation = Math.sqrt((stat.sumOfSquares / stat.count) - Math.pow((stat.sum / stat.count), 2));
-        await stat.save();
-      } else {
-        const newStat = new CryptoStats({
+        // Save or update cryptoData collection with the latest market data
+        await cryptoData.create({
           coin,
-          count: 1,
-          sum: price,
-          sumOfSquares: price * price,
-          stdDeviation: 0
+          price,
+          marketCap,
+          change24h,
+          timestamp: new Date(),
         });
-        await newStat.save();
+
+        // Calculate updated stats for each coin
+        const statsRecord = await cryptoStats.findOne({ coin });
+
+        if (statsRecord) {
+          // Update stats in O(1) for efficient deviation calculation
+          const { count, sum, sumOfSquares } = statsRecord;
+          const newCount = count + 1;
+          const newSum = sum + price;
+          const newSumOfSquares = sumOfSquares + price * price;
+          const newStdDeviation = Math.sqrt(
+            (newSumOfSquares - (newSum * newSum) / newCount) / newCount
+          );
+
+          await cryptoStats.updateOne(
+            { coin },
+            {
+              count: newCount,
+              sum: newSum,
+              sumOfSquares: newSumOfSquares,
+              stdDeviation: newStdDeviation,
+              lastUpdated: new Date(),
+            }
+          );
+        } else {
+          // Create a new stats record if none exists
+          const stdDeviation = 0; // Initial deviation would be 0 for a single value
+          await cryptoStats.create({
+            coin,
+            count: 1,
+            sum: price,
+            sumOfSquares: price * price,
+            stdDeviation,
+            lastUpdated: new Date(),
+          });
+        }
+
+        console.log(`Data updated for ${coin}: Price=${price}, Market Cap=${marketCap}, 24h Change=${change24h}`);
       }
     }
-
-    console.log('Crypto data updated successfully.');
   } catch (error) {
-    console.error('Error fetching crypto data:', error.message);
+    console.error('Error fetching data from CoinGecko:', error.message);
   }
-}
+};
 
-// Schedule the job to run every 2 hours
-cron.schedule('0 */2 * * *', fetchCryptoData);
+// Schedule background job to run every 2 hours
+const startCryptoFetchJob = () => {
+  // Run initial fetch immediately to populate data
+  fetchCryptoData();
+
+  // Set up the interval to run every 2 hours
+  setInterval(fetchCryptoData, 2 * 60 * 60 * 1000); // 2 hours = 2 * 60 * 60 * 1000 milliseconds
+};
+
+module.exports = { startCryptoFetchJob };
