@@ -66,6 +66,8 @@ const fetchCryptoData = async () => {
     }
   } catch (error) {
     console.error('Error fetching data from CoinGecko:', error.message);
+    console.error('Full error details:', error.response ? error.response.data : error.message);
+
   }
 };
 
