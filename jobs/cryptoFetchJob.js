@@ -11,7 +11,7 @@ const fetchCryptoData = async () => {
   try {
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${coins.join()}&vs_currencies=usd&include_market_cap=true&include_24hr_change=true`;
     const response = await axios.get(url);
-
+    
     if (response.data) {
       for (const coin of coins) {
         const { usd: price, usd_market_cap: marketCap, usd_24h_change: change24h } = response.data[coin];

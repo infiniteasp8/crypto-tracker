@@ -58,5 +58,5 @@ The application uses MongoDB to store data about cryptocurrencies. Two main coll
    ```bash
    git clone https://github.com/yourusername/crypto-tracker.git
    cd crypto-tracker
-=======
->>>>>>> 64f8d86743dfb3d031e0be963e25766e11c1429a
+   //install the various required packages
+   node server.js
